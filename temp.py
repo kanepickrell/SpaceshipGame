@@ -79,11 +79,18 @@ class EnemyShip(Ship):
 def main():
     run = True
     FPS = 60
-    level = 1
+    level = 0
     lives = 5
     player_vel = 5
+    enemy_vel = 2
+    
+    enemies = []
+    wave_length = 5
+
     main_font = py.font.SysFont('comicsans', 35)
+    lost_font = py.font.SysFont('comicsans', 65)
     clock = py.time.Clock()
+    lost = False
 
 #   s = Ship(300, 200)
     p = Player(300, 200)
@@ -91,22 +98,40 @@ def main():
     def redraw_window():
         WIN.blit(BACKGROUND_SCALED, (0, 0))
         lives_label = main_font.render(f"Lives: {lives}", 1, (255, 255, 255))
-        level_lable = main_font.render(f"Level: {level}", 1, (255, 255, 255))
+        level_label = main_font.render(f"Level: {level}", 1, (255, 255, 255))
         WIN.blit(lives_label, (10, 10))
-        WIN.blit(level_lable, (WIDTH - level_lable.get_width() - 10, 10))
+        WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
+
+        for enemy in enemies:
+            enemy.draw(WIN)
 
         p.draw(WIN)
+
+        if lost:
+            lost_label = lost_font.render(f"You have lost the game.", 1, (255,0,0))
+            WIN.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 350))
 
         py.display.update()
 
     while run:
         clock.tick(FPS)
-        
-        redraw_window()
+
+        if lives <= 0 or p.health <= 0:
+            lost = True
+
+        if len(enemies) == 0:
+            level += 1
+            wave_length += 10
+            for i in range(wave_length):
+                enemy = EnemyShip(random.randrange(50, WIDTH - 100), 
+                                  random.randrange(-1500, -50), 
+                                  random.choice(["red", "green", "blue"]))
+                enemies.append(enemy)
 
         for event in py.event.get():
             if event.type == py.QUIT:
                 run = False
+
         keys = py.key.get_pressed()
         if keys[py.K_a] and p.x_pos - player_vel > 0: # moves left
             p.x_pos -= player_vel
@@ -116,6 +141,14 @@ def main():
             p.y_pos -= player_vel
         if keys[py.K_s]and p.y_pos + player_vel + p.get_height() < HEIGHT:  # move up
             p.y_pos += player_vel 
+
+        for enemy in enemies[:]:
+            enemy.move(enemy_vel)
+            if enemy.y_pos + enemy.get_height() > HEIGHT:
+                lives -= 1
+                enemies.remove(enemy)
+
+        redraw_window()
 main()
 
 

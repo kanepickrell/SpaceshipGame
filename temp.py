@@ -83,6 +83,9 @@ def main():
     lives = 5
     player_vel = 5
     enemy_vel = 2
+
+    lost = False
+    lost_count = 0
     
     enemies = []
     wave_length = 5
@@ -90,7 +93,6 @@ def main():
     main_font = py.font.SysFont('comicsans', 35)
     lost_font = py.font.SysFont('comicsans', 65)
     clock = py.time.Clock()
-    lost = False
 
 #   s = Ship(300, 200)
     p = Player(300, 200)
@@ -115,9 +117,17 @@ def main():
 
     while run:
         clock.tick(FPS)
+        redraw_window()
 
         if lives <= 0 or p.health <= 0:
             lost = True
+            lost_count += 1
+
+        if lost:
+            if lost_count > FPS * 3:
+                run = False
+            else:
+                continue
 
         if len(enemies) == 0:
             level += 1
@@ -148,7 +158,6 @@ def main():
                 lives -= 1
                 enemies.remove(enemy)
 
-        redraw_window()
 main()
 
 

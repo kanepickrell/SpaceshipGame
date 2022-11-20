@@ -28,7 +28,28 @@ TRASHCAN = py.image.load(os.path.join("assets", "trash.png"))
 BACKGROUND = py.image.load(os.path.join("assets", "background-black.png"))
 BACKGROUND_SCALED = py.transform.scale(BACKGROUND, (WIDTH, HEIGHT))
 
-#this is an ABSTACT CLASS used later for inheritance.
+#these will be ABSTACT CLASSES and used later for inheritance.
+
+class Laser:
+    def __init__(self, x_pos, y_pos, laser_img) -> None:
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+        self.img = laser_img
+        self.mask = py.mask.from_surface(self.img)
+
+    def draw(self, window):
+        window.blit(self.img, (self.x_pos, self.y_pos))
+    
+    def move(self, vel):
+        self.y_pos += vel
+
+    def off_screen(self, height):
+        return not(self.y <= height and self.y >= 0)
+
+    def collision(self, obj):
+        return collide(self, obj)
+
+        
 class Ship:
     def __init__(self, x_pos, y_pos, health=100) -> None:
         self.x_pos = x_pos
@@ -42,12 +63,37 @@ class Ship:
     def draw(self, window):
         #py.draw.rect(window, (0, 255,0), (self.x_pos, self.y_pos, 50, 50), width=0)
         window.blit(self.ship_image, (self.x_pos, self.y_pos))
+        for laser in self.lasers:
+            laser.draw(WIN)
+
+    def move_laser(self, vel, obj):
+        self.cooldown()
+        for laser in self.lasers:
+            laser.move(vel)
+            if laser.off_screen(HEIGHT):
+                self.lasers.remove(laser)
+            elif laser.collision(obj):
+                obj -= 10
+                self.lasers.remove(laser)
+
 
     def get_width(self):
         return self.ship_image.get_width()
         
     def get_height(self):
         return self.ship_image.get_height()
+
+    def cooldown(self):
+        if self.cool_down_counter >= self.COOLDOWN:
+            self.cool_down_counter = 0
+        elif self.cool_down_counter > 0:
+            self.cool_down_counter += 1
+
+    def shoot(self):
+        if self.cool_down_counter == 0:
+            laser = Laser(self.x_pos, self.y_pos, self.laser_image)
+            self.lasers.append(laser)
+            self.cool_down_counter = 1
 
 
 class Player(Ship):
@@ -74,6 +120,11 @@ class EnemyShip(Ship):
 
     def move(self, vel):
         self.y_pos += vel
+
+def collide(obj1, obj2):
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
+    return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
 
 def main():
@@ -149,8 +200,10 @@ def main():
             p.x_pos += player_vel
         if keys[py.K_w] and p.y_pos - player_vel > 0: # moves down
             p.y_pos -= player_vel
-        if keys[py.K_s]and p.y_pos + player_vel + p.get_height() < HEIGHT:  # move up
+        if keys[py.K_s] and p.y_pos + player_vel + p.get_height() < HEIGHT:  # move up
             p.y_pos += player_vel 
+        if keys[py.K_SPACE]:
+            p.shoot()
 
         for enemy in enemies[:]:
             enemy.move(enemy_vel)

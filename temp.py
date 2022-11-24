@@ -17,9 +17,9 @@ BLUE_SPACE_SHIP = py.image.load(os.path.join("assets", "pixel_ship_blue_small.pn
 GREEN_SPACE_SHIP = py.image.load(os.path.join("assets", "pixel_ship_green_small.png"))
 YELLOW_SPACE_SHIP = py.image.load(os.path.join("assets", "pixel_ship_yellow.png"))
 
-RED_SPACE_LASER = py.image.load(os.path.join("assets", "pixel_laser_red.png"))
-BLUE_SPACE_LASER = py.image.load(os.path.join("assets", "pixel_laser_blue.png"))
-GREEN_SPACE_LASER = py.image.load(os.path.join("assets", "pixel_laser_green.png"))
+RED_LASER = py.image.load(os.path.join("assets", "pixel_laser_red.png"))
+BLUE_LASER = py.image.load(os.path.join("assets", "pixel_laser_blue.png"))
+GREEN_LASER = py.image.load(os.path.join("assets", "pixel_laser_green.png"))
 YELLOW_SPACE_LASER = py.image.load(os.path.join("assets", "pixel_laser_yellow.png"))
 
 TRASHCAN = py.image.load(os.path.join("assets", "trash.png"))
@@ -44,13 +44,15 @@ class Laser:
         self.y_pos += vel
 
     def off_screen(self, height):
-        return not(self.y <= height and self.y >= 0)
+        return not(self.y_pos <= height and self.y_pos >= 0)
 
     def collision(self, obj):
         return collide(self, obj)
 
         
 class Ship:
+    COOLDOWN = 30
+
     def __init__(self, x_pos, y_pos, health=100) -> None:
         self.x_pos = x_pos
         self.y_pos = y_pos
@@ -66,16 +68,18 @@ class Ship:
         for laser in self.lasers:
             laser.draw(WIN)
 
-    def move_laser(self, vel, obj):
+    def move_lasers(self, vel, objs):
         self.cooldown()
         for laser in self.lasers:
             laser.move(vel)
             if laser.off_screen(HEIGHT):
                 self.lasers.remove(laser)
-            elif laser.collision(obj):
-                obj -= 10
-                self.lasers.remove(laser)
-
+            else:
+                for obj in objs:
+                    if laser.collision(obj):
+                        objs.remove(obj)
+                        if laser in self.lasers:
+                            self.lasers.remove(laser)
 
     def get_width(self):
         return self.ship_image.get_width()
@@ -100,18 +104,24 @@ class Player(Ship):
     def __init__(self, x_pos, y_pos, health=100) -> None:
         super().__init__(x_pos, y_pos, health)
         self.ship_image = YELLOW_SPACE_SHIP
-        self.laser_image = BLUE_SPACE_LASER
+        self.laser_image = BLUE_LASER
         self.mask = py.mask.from_surface(self.ship_image)
         self.max_health = 100
 
+    def draw(self, window):
+        super().draw(window)
+        self.healthbar(window)
+
+    def healthbar(self, window):
+        py.draw.rect(window, (255,0,0), (self.x_pos, self.y_pos + self.ship_image.get_height() + 10, self.ship_image.get_width(), 10))
+        py.draw.rect(window, (0,255,0), (self.x_pos, self.y_pos + self.ship_image.get_height() + 10, self.ship_image.get_width() * (self.health/self.max_health), 10))
+
 class EnemyShip(Ship):
     COLOR_MAP = {
-
-        "red": (RED_SPACE_SHIP, RED_SPACE_LASER),
-        "blue": (BLUE_SPACE_SHIP, BLUE_SPACE_LASER),
-        "green": (GREEN_SPACE_SHIP, GREEN_SPACE_LASER),
-
-    }
+                "red": (RED_SPACE_SHIP, RED_LASER),
+                "blue": (BLUE_SPACE_SHIP, BLUE_LASER),
+                "green": (GREEN_SPACE_SHIP, GREEN_LASER),
+                }
 
     def __init__(self, x_pos, y_pos, color,health=100) -> None:
         super().__init__(x_pos, y_pos, health)
@@ -121,9 +131,15 @@ class EnemyShip(Ship):
     def move(self, vel):
         self.y_pos += vel
 
+    def shoot(self):
+        if self.cool_down_counter == 0:
+            laser = Laser(self.x_pos - 20, self.y_pos, self.laser_image)
+            self.lasers.append(laser)
+            self.cool_down_counter = 1
+
 def collide(obj1, obj2):
-    offset_x = obj2.x - obj1.x
-    offset_y = obj2.y - obj1.y
+    offset_x = obj2.x_pos - obj1.x_pos
+    offset_y = obj2.y_pos - obj1.y_pos
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
 
@@ -134,6 +150,7 @@ def main():
     lives = 5
     player_vel = 5
     enemy_vel = 2
+    laser_vel = 5
 
     lost = False
     lost_count = 0
@@ -182,11 +199,12 @@ def main():
 
         if len(enemies) == 0:
             level += 1
-            wave_length += 10
+            wave_length += 5
             for i in range(wave_length):
-                enemy = EnemyShip(random.randrange(50, WIDTH - 100), 
-                                  random.randrange(-1500, -50), 
-                                  random.choice(["red", "green", "blue"]))
+                enemy = EnemyShip(
+                random.randrange(50, WIDTH-100), 
+                random.randrange(-1500, -100), 
+                random.choice(["red", "green"]))
                 enemies.append(enemy)
 
         for event in py.event.get():
@@ -207,12 +225,20 @@ def main():
 
         for enemy in enemies[:]:
             enemy.move(enemy_vel)
-            if enemy.y_pos + enemy.get_height() > HEIGHT:
+            enemy.move_lasers(laser_vel,enemies)
+
+            if random.randrange(0, 2*60) == 1:
+                enemy.shoot()
+
+            if collide(enemy, p):
+                p.health -= 10
+                enemies.remove(enemy)
+
+            elif enemy.y_pos + enemy.get_height() > HEIGHT:
                 lives -= 1
                 enemies.remove(enemy)
 
+        p.move_lasers(-laser_vel, enemies)
+
 main()
-
-
-
 

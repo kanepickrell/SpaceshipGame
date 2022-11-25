@@ -119,7 +119,7 @@ class Player(Ship):
 class EnemyShip(Ship):
     COLOR_MAP = {
                 "red": (RED_SPACE_SHIP, RED_LASER),
-                "blue": (BLUE_SPACE_SHIP, BLUE_LASER),
+                "blue": (GREEN_SPACE_SHIP, GREEN_LASER),
                 "green": (GREEN_SPACE_SHIP, GREEN_LASER),
                 }
 

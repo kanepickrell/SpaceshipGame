@@ -240,5 +240,21 @@ def main():
 
         p.move_lasers(-laser_vel, enemies)
 
-main()
+def main_menu():
+    title_font = py.font.SysFont("comicsans", 70)
+    run = True
+    while run:
+        WIN.blit(BACKGROUND, (0,0))
+        title_label = title_font.render("Press the mouse to begin...", 1, (255,255,255))
+        WIN.blit(title_label, (WIDTH/2 - title_label.get_width()/2, 350))
+        py.display.update()
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                run = False
+            if event.type == py.MOUSEBUTTONDOWN:
+                main()
+    py.quit()
+
+
+main_menu()
 

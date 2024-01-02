@@ -5,7 +5,7 @@ Description
 Space Fighter Game is a fast-paced arcade-style game developed using Python and Pygame. In this game, players navigate a spaceship, avoiding and fighting against enemy ships using lasers. The game features increasing difficulty levels and a life system.
 Part of a tutorial I followed, I designed several classes to create an emulation of Space Invaders. I give credit to this program from a YouTuber Tech with Tim and his walkthrough of Pygame. 
 
-Requirements
+# Requirements
 Python 3.x
 Pygame Library
 Installation
@@ -16,7 +16,7 @@ pip install pygame
 Game Assets
 The game requires several image assets for ships, lasers, and the background, stored in the assets directory. Ensure this directory is in the same folder as the game script.
 
-Features
+# Features
 Player spaceship controlled with keyboard.
 Multiple enemy types with unique behaviors.
 Collision detection for ships and lasers.
@@ -28,7 +28,7 @@ Press Space to shoot lasers.
 Avoid enemy ships and lasers.
 Destroy enemy ships to increase the level.
 Game ends when player loses all lives or health.
-Classes
+# Classes
 Laser: Manages the laser's position, movement, and collision.
 Ship: Base class for all ships, handling their behavior and actions.
 Player: Inherits from Ship, represents the player's character.
@@ -43,6 +43,6 @@ To run the game, execute the script in a Python environment:
 Copy code
 python space_fighter_game.py
 Developer Contact
-Creator: [Your Name]
-Email: [Your Email]
-GitHub: [Your GitHub]
+Creator: kane pickrel
+Email: kanepickrell@gmail.com
+GitHub: kanepickrell

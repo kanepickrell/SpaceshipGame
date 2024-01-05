@@ -25,7 +25,7 @@ YELLOW_SPACE_LASER = py.image.load(os.path.join("assets", "pixel_laser_yellow.pn
 TRASHCAN = py.image.load(os.path.join("assets", "trash.png"))
 
 #BACKGROUND = py.image.load(os.path.join("assets", "Oahu2.png"))
-BACKGROUND = py.image.load(os.path.join("assets", "cat.png"))
+BACKGROUND = py.image.load(os.path.join("assets", "background-black.png"))
 BACKGROUND_SCALED = py.transform.scale(BACKGROUND, (WIDTH, HEIGHT))
 
 #these will be ABSTACT CLASSES and used later for inheritance.

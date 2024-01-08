@@ -2,7 +2,7 @@ import pygame as py
 import os
 import random
 import time
-from agent import SpaceGameAgent
+from agent import Agent
 py.font.init()
 
 # display window
@@ -100,7 +100,6 @@ class Ship:
             self.lasers.append(laser)
             self.cool_down_counter = 1
 
-
 class Player(Ship):
     def __init__(self, x_pos, y_pos, health=100) -> None:
         super().__init__(x_pos, y_pos, health)
@@ -133,22 +132,20 @@ class EnemyShip(Ship):
         self.y_pos += vel
 
     def shoot(self):
-        if self.cool_down_counter == 0:
-            laser = Laser(self.x_pos - 20, self.y_pos, self.laser_image)
-            self.lasers.append(laser)
-            self.cool_down_counter = 1
+        # we are disabling the enemy shooting for now, so we can train the agent to avoid the enemy first
+        pass
+        # if self.cool_down_counter == 0:
+        #     laser = Laser(self.x_pos - 20, self.y_pos, self.laser_image)
+        #     self.lasers.append(laser)
+        #     self.cool_down_counter = 1
 
 def collide(obj1, obj2):
     offset_x = obj2.x_pos - obj1.x_pos
     offset_y = obj2.y_pos - obj1.y_pos
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
-
-# Initialize your RL agent here
-state_size = 12
-action_size = 6
-# agent = SpaceGameAgent(state_size, action_size)
-
+###########
+# Main loop
 def main():
     run = True
     FPS = 60
@@ -162,7 +159,7 @@ def main():
     lost_count = 0
     
     enemies = []
-    wave_length = 2
+    wave_length = 5
 
     main_font = py.font.SysFont('comicsans', 35)
     lost_font = py.font.SysFont('comicsans', 65)
@@ -189,10 +186,12 @@ def main():
 
         py.display.update()
 
+    # Initialize the agent
+    agent = Agent()
+
     while run:
         clock.tick(FPS)
         redraw_window()
-
 
         if lives <= 0 or p.health <= 0:
             lost = True
@@ -218,71 +217,34 @@ def main():
             if event.type == py.QUIT:
                 run = False
 
-        ###############################################################        
-        # Track player movement, perform actions, and calculate rewards
-        ###############################################################
-        # Get the current state of the game
-        def get_current_state(player, enemies, lives, level):
-            # Create a list to hold the state information
-            state = []
-
-            # Player's position
-            state.extend([player.x_pos, player.y_pos])
-
-            # Player's health
-            state.append(player.health)
-
-            # For each enemy, add their position and health
-            for enemy in enemies:
-                state.extend([enemy.x_pos, enemy.y_pos, enemy.health])
-
-            # Add the number of lives left and the current level
-            state.extend([lives, level])
-
-            # If there are fewer enemies than the maximum, pad the state with zeros
-            # max_enemies = 10  # Set this to your maximum number of enemies
-            # while len(enemies) < max_enemies:
-            #     state.extend([0, 0, 0])  # Zero padding for position and health
-
-            return state
-        state = get_current_state(p, enemies, lives, level)
-        print(f"Position: {state[0], state[1]} Enemies left: {len(enemies)} Lives: {lives} Level: {level}")
-
-        # Get action from the RL agent
-        # action = agent.get_action(state)
-
-        # Execute the action in the game
-        # execute_action(action, p) # Define this function to map actions to game movements
-
-        # Calculate the reward
-        # reward = calculate_reward() # Define this function based on your reward criteria
-
-        # Update the agent
-        # new_state = get_current_state()
-        # agent.learn(state, action, reward, new_state, run)
-
-        # Rest of your game loop
-        # ...
-                
         ##########################        
         # Automate player movement
         ##########################
-        move_directions = [(-player_vel, 0), (player_vel, 0)]  # left, right
-        if random.randrange(0, 60) == 10:  # Adjust frequency of movement changes
-            direction = random.choice(move_directions)
-            p.x_pos += direction[0]
 
+        # get the current state of the game , i.e. player position, enemy positions, etc.
+        current_state = agent.get_current_state(p, enemies, p.lasers)
+
+        # agent selects an action based on the current state
+        action = agent.select_action(current_state)
+
+        # perform the selected action and update the game state
+        if action == 0:
+            pass
+        elif action == 1:
+            p.x_pos += player_vel # move right
+        elif action == 2:
+            p.x_pos -= player_vel # move left           
+
+        
         # Ensure player stays within the screen bounds horizontally
         p.x_pos = max(min(p.x_pos, WIDTH - p.get_width()), 0)
 
         # Keep the player at the bottom of the screen
-        p.y_pos = HEIGHT - p.get_height() - 30  # 10 is a buffer from the bottom edge
+        p.y_pos = HEIGHT - p.get_height() - 30  # 30 is a buffer from the bottom edge
 
         # Automate shooting
         if random.randrange(0, 15) == 1:  # Adjust shooting frequency
             p.shoot()
-
-
 
         for enemy in enemies[:]:
             enemy.move(enemy_vel)
@@ -318,4 +280,6 @@ def main_menu():
 
 
 main_menu()
+
+
 

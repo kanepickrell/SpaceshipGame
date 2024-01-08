@@ -144,13 +144,35 @@ def collide(obj1, obj2):
     offset_y = obj2.y_pos - obj1.y_pos
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
+
+def track_enemy_sector(enemies):
+    grid = [[0 for _ in range(3)] for _ in range(3)]
+    sector_width = 750 / 3
+    sector_height = 750 / 3
+
+    for enemy in enemies:
+        # Check if enemy is within the visible game area
+        if 0 <= enemy.x_pos < 750 and 0 <= enemy.y_pos < 750:
+            sector_x = int(enemy.x_pos // sector_width)
+            sector_y = int(enemy.y_pos // sector_height)
+
+            # Clamp the sector indices to be within the grid
+            sector_x = max(0, min(sector_x, 3 - 1))
+            sector_y = max(0, min(sector_y, 3 - 1))
+
+            # Increment the count in the corresponding sector
+            grid[sector_y][sector_x] += 1
+
+    return grid
+
+
 ###########
 # Main loop
 def main():
     run = True
     FPS = 60
     level = 0
-    lives = 5
+    passes = 5
     player_vel = 5
     enemy_vel = 2
     laser_vel = 5
@@ -159,7 +181,7 @@ def main():
     lost_count = 0
     
     enemies = []
-    wave_length = 5
+    wave_length = 1
 
     main_font = py.font.SysFont('comicsans', 35)
     lost_font = py.font.SysFont('comicsans', 65)
@@ -170,10 +192,16 @@ def main():
 
     def redraw_window():
         WIN.blit(BACKGROUND_SCALED, (0, 0))
-        lives_label = main_font.render(f"Lives: {lives}", 1, (255, 255, 255))
+        passes_label = main_font.render(f"Passes: {passes}", 1, (255, 255, 255))
         level_label = main_font.render(f"Level: {level}", 1, (255, 255, 255))
-        WIN.blit(lives_label, (10, 10))
+        WIN.blit(passes_label, (10, 10))
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
+        # draw a 3x3 grid over the screen
+        py.draw.line(WIN, (255,255,255), (0, HEIGHT/3), (WIDTH, HEIGHT/3))
+        py.draw.line(WIN, (255,255,255), (0, 2*HEIGHT/3), (WIDTH, 2*HEIGHT/3))
+        py.draw.line(WIN, (255,255,255), (WIDTH/3, 0), (WIDTH/3, HEIGHT))
+        py.draw.line(WIN, (255,255,255), (2*WIDTH/3, 0), (2*WIDTH/3, HEIGHT))
+
 
         for enemy in enemies:
             enemy.draw(WIN)
@@ -186,14 +214,15 @@ def main():
 
         py.display.update()
 
-    # Initialize the agent
+    # Initialize agent object
     agent = Agent()
 
+    # Game loop
     while run:
         clock.tick(FPS)
         redraw_window()
 
-        if lives <= 0 or p.health <= 0:
+        if passes <= 0 or p.health <= 0:
             lost = True
             lost_count += 1
 
@@ -217,12 +246,16 @@ def main():
             if event.type == py.QUIT:
                 run = False
 
-        ##########################        
-        # Automate player movement
-        ##########################
+        ###########################        
+        # Apply agent functionality
+        ###########################
+        # print(f"Launch side: {enemy.x_pos, enemy.y_pos}")
 
         # get the current state of the game , i.e. player position, enemy positions, etc.
-        current_state = agent.get_current_state(p, enemies, p.lasers)
+        grid = track_enemy_sector(enemies)
+        print(grid)
+        current_state = agent.get_current_state(p, grid, p.lasers)
+        # print(current_state)
 
         # agent selects an action based on the current state
         action = agent.select_action(current_state)
@@ -243,8 +276,8 @@ def main():
         p.y_pos = HEIGHT - p.get_height() - 30  # 30 is a buffer from the bottom edge
 
         # Automate shooting
-        if random.randrange(0, 15) == 1:  # Adjust shooting frequency
-            p.shoot()
+        # if random.randrange(0, 15) == 1:  # Adjust shooting frequency
+        #     p.shoot()
 
         for enemy in enemies[:]:
             enemy.move(enemy_vel)
@@ -254,11 +287,11 @@ def main():
                 enemy.shoot()
 
             if collide(enemy, p):
-                p.health -= 10
+                p.health -= 100
                 enemies.remove(enemy)
 
             elif enemy.y_pos + enemy.get_height() > HEIGHT:
-                lives -= 1
+                passes -= 1
                 enemies.remove(enemy)
 
         p.move_lasers(-laser_vel, enemies)

@@ -67,7 +67,7 @@ class Agent:
         # Calculate the average distance only for enemies within 250 units
         if count > 0:
             average_distance = total_distance / count
-            reward = average_distance/10
+            reward += average_distance/10
 
         # Check for collision and adjust the reward
         if player.health <= 0:

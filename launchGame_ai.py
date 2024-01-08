@@ -3,6 +3,8 @@ import os
 import random
 import time
 from agent import Agent
+import matplotlib.pyplot as plt
+
 py.font.init()
 
 # display window
@@ -178,7 +180,7 @@ def main():
     level = 0
     passes = 5
     player_vel = 5
-    enemy_vel = 2
+    enemy_vel = 5
     laser_vel = 5
 
     lost = False
@@ -194,19 +196,17 @@ def main():
     ##################
     # Agent parameters
     agent = Agent()
-    num_episodes = 2
+    num_episodes = 10
     total_rewards = []
 
     # learning_rate = 0.1
     # discount_factor = 0.95
     # exploration_rate = 1
     # exploration_decay_rate = 0.995
-    
-
-#   s = Ship(300, 200)
+      
     p = Player(300, 200)
 
-    def redraw_window():
+    def redraw_window(reward):
         WIN.blit(BACKGROUND_SCALED, (0, 0))
         passes_label = main_font.render(f"Passes: {passes}", 1, (255, 255, 255))
         # level_label = main_font.render(f"Level: {level}", 1, (255, 255, 255))
@@ -221,6 +221,9 @@ def main():
         py.draw.line(WIN, (255,255,255), (WIDTH/3, 0), (WIDTH/3, HEIGHT))
         py.draw.line(WIN, (255,255,255), (2*WIDTH/3, 0), (2*WIDTH/3, HEIGHT))
 
+        reward_label = main_font.render(f"Total Reward: {reward}", 1, (255, 255, 255))
+        WIN.blit(reward_label, (10, 40))
+
 
         for enemy in enemies:
             enemy.draw(WIN)
@@ -229,9 +232,7 @@ def main():
 
         if lost:
             lost_label = lost_font.render(f"You have lost the game.", 1, (255,0,0))
-            WIN.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 350))
-
-        
+            WIN.blit(lost_label, (WIDTH/2 - lost_label.get_width()//2, 350))
 
         py.display.update()
 
@@ -245,15 +246,20 @@ def main():
         wave_length = 1
         episode_reward = 0  # Reward for the current episode
         p = Player(300, 200)  # Reset the player at the start of each episode
+        reward = 0  # Initialize reward with a default value
 
         # Game loop
         while run:
             clock.tick(FPS)
-            redraw_window()
+            redraw_window(reward)
 
-            if passes <= 0 or p.health <= 0:
+            if p.health <= 0:
                 lost = True
                 lost_count += 1
+
+            if passes == 0:
+                passes_label = lost_font.render(f"Wave Complete", 1, (0,0,255))
+                WIN.blit(passes_label, (WIDTH/2 - passes_label.get_width()//2, HEIGHT/2))
 
             if lost:
                 if lost_count > FPS * 3:
@@ -334,16 +340,28 @@ def main():
             # Get the reward based on the current state
             reward = agent.reward_function(p, enemies, p.health)
             print(f"Reward: {reward}")
-            episode_reward = reward
+            episode_reward += reward
             print(f"Episode Number: {episode + 1}")
 
+        
+            keys = py.key.get_pressed()
+            if keys[py.K_q]:
+                run = False
+                break
 
         total_rewards.append(episode_reward)
         print(f"Episode {episode + 1} completed. Total Reward: {episode_reward}")
+        redraw_window(total_rewards)
+    
 
     print(f"\n{num_episodes} episodes completed.")
     print("Per episode", total_rewards)
     print("Total reward:", sum(total_rewards))
+    plt.plot(total_rewards)
+    plt.title('Rewards Over Episodes')
+    plt.xlabel('Episode')
+    plt.ylabel('Total Reward')
+    plt.show()
     
 
 def main_menu():

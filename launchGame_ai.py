@@ -180,8 +180,8 @@ def main():
     level = 0
     passes = 5
     player_vel = 5
-    enemy_vel = 5
-    laser_vel = 5
+    enemy_vel = 10
+    laser_vel = 10
 
     lost = False
     lost_count = 0
@@ -193,16 +193,8 @@ def main():
     lost_font = py.font.SysFont('ariel', 65)
     clock = py.time.Clock()
 
-    ##################
-    # Agent parameters
-    agent = Agent()
-    num_episodes = 10
+    num_episodes = 150
     total_rewards = []
-
-    # learning_rate = 0.1
-    # discount_factor = 0.95
-    # exploration_rate = 1
-    # exploration_decay_rate = 0.995
       
     p = Player(300, 200)
 
@@ -231,7 +223,7 @@ def main():
         p.draw(WIN)
 
         if lost:
-            lost_label = lost_font.render(f"You have lost the game.", 1, (255,0,0))
+            lost_label = lost_font.render(f"Collision (-100)", 1, (255,0,0))
             WIN.blit(lost_label, (WIDTH/2 - lost_label.get_width()//2, 350))
 
         py.display.update()
@@ -243,7 +235,7 @@ def main():
         level = 0
         passes = 5
         enemies = []
-        wave_length = 1
+        wave_length = 5
         episode_reward = 0  # Reward for the current episode
         p = Player(300, 200)  # Reset the player at the start of each episode
         reward = 0  # Initialize reward with a default value
@@ -269,7 +261,7 @@ def main():
 
             if len(enemies) == 0:
                 level += 1
-                wave_length += 5
+                # wave_length += 5
                 for i in range(wave_length):
                     enemy = EnemyShip(
                     random.randrange(50, WIDTH-100), 
@@ -287,14 +279,13 @@ def main():
             ###########################
             # print(f"Launch side: {enemy.x_pos, enemy.y_pos}")
 
-            # get the current state of the game , i.e. player position, enemy positions, etc.
-            # grid = track_enemy_sector(enemies)
-            # print(grid)
+            # (1)GET STATE: Current state of the game , i.e. player position, enemy positions, etc.
+
             current_state = agent.get_current_state(p, enemies, p.lasers)
             print(f"Current state: {current_state}")
 
 
-            # agent selects an action based on the current state
+            # (2) GET ACTION: agent selects an action based on the current state
             action = agent.select_action(current_state)
 
             # perform the selected action and update the game state
@@ -303,7 +294,15 @@ def main():
             elif action == 1:
                 p.x_pos += player_vel # move right
             elif action == 2:
-                p.x_pos -= player_vel # move left           
+                p.x_pos -= player_vel # move left        
+            elif action == 3:
+                p.x_pos += 2*player_vel
+            elif action == 4:
+                p.x_pos -= 2*player_vel 
+            elif action == 5:
+                p.x_pos += 3*player_vel
+            elif action == 6:
+                p.x_pos -= 3*player_vel
 
             
             # Ensure player stays within the screen bounds horizontally
@@ -316,9 +315,9 @@ def main():
             # if random.randrange(0, 15) == 1:  # Adjust shooting frequency
             #     p.shoot()
 
-            
+            next_state = agent.get_current_state(p, enemies, p.lasers)
 
-
+        
             # Enemy movement and tracking
             for enemy in enemies[:]:
                 enemy.move(enemy_vel)
@@ -337,13 +336,15 @@ def main():
 
             p.move_lasers(-laser_vel, enemies)
 
-            # Get the reward based on the current state
+            # (3) CALC REWARD: Get the reward based on the current state
             reward = agent.reward_function(p, enemies, p.health)
             print(f"Reward: {reward}")
             episode_reward += reward
             print(f"Episode Number: {episode + 1}")
 
-        
+            agent.learn(current_state, action, reward, next_state)
+
+
             keys = py.key.get_pressed()
             if keys[py.K_q]:
                 run = False
@@ -354,33 +355,26 @@ def main():
         redraw_window(total_rewards)
     
 
-    print(f"\n{num_episodes} episodes completed.")
-    print("Per episode", total_rewards)
-    print("Total reward:", sum(total_rewards))
-    plt.plot(total_rewards)
-    plt.title('Rewards Over Episodes')
-    plt.xlabel('Episode')
-    plt.ylabel('Total Reward')
-    plt.show()
-    
-
 def main_menu():
     title_font = py.font.SysFont("ariel", 70)
     run = True
     while run:
         WIN.blit(BACKGROUND, (0,0))
-        title_label = title_font.render("Press the mouse to begin...", 1, (255,255,255))
+        title_label = title_font.render("Simulation Ready. Click any key", 1, (255,255,255))
         WIN.blit(title_label, (WIDTH/2 - title_label.get_width()/2, 350))
         py.display.update()
         for event in py.event.get():
             if event.type == py.QUIT:
                 run = False
-            if event.type == py.MOUSEBUTTONDOWN:
+            if event.type == py.MOUSEBUTTONDOWN or event.type == py.KEYDOWN:
                 main()
     py.quit()
 
-
-main_menu()
+if __name__ == "__main__":
+    agent = Agent()
+    main_menu()
+    agent.save_q_table()
+    
 
 
 

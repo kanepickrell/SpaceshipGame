@@ -4,8 +4,9 @@ README.md for Space Fighter Game
 
 # Description
 
-Space Fighter Game is a fast-paced arcade-style game developed using Python and Pygame. In this game, players navigate a spaceship, avoiding and fighting against enemy ships using lasers. The game features increasing difficulty levels and a life system.
-Part of a tutorial I followed, I designed several classes to create an emulation of Space Invaders. I give credit to this program from a YouTuber Tech with Tim and his walkthrough of Pygame.
+SpaceShipGame is a fast-paced arcade-style game designed as a testbed for my reinforcement learning agents. Developed with Python, Pygame, and other ML frameworks; this game puts AI agents in control of spaceships, simulating a "Space Invaders"-esque environment. The agents learn to dodge and combat enemy ships using lasers, adapting their strategies as the game progresses through increasing difficulty levels. This platform serves both as an engaging game and a dynamic environment for training and evaluating AI models in decision-making, strategy development, and real-time responses.
+
+The initial version of this program was part of a tutorial I followed, I designed several classes to create an emulation of Space Invaders. I give credit to this program from a YouTuber Tech with Tim and his walkthrough of Pygame.
 
 # Requirements
 

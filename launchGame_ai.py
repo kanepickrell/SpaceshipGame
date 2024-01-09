@@ -193,7 +193,7 @@ def main():
     lost_font = py.font.SysFont('ariel', 65)
     clock = py.time.Clock()
 
-    num_episodes = 150
+    num_episodes = 1000
     total_rewards = []
       
     p = Player(300, 200)
@@ -353,7 +353,15 @@ def main():
         total_rewards.append(episode_reward)
         print(f"Episode {episode + 1} completed. Total Reward: {episode_reward}")
         redraw_window(total_rewards)
-    
+
+        
+        # py.quit()
+    # plot rewards over episodes and save as png
+    plt.plot(total_rewards)
+    plt.ylabel('Rewards')
+    plt.xlabel('Episodes')
+    plt.savefig('rewards.png')
+    plt.show()
 
 def main_menu():
     title_font = py.font.SysFont("ariel", 70)

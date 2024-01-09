@@ -1,16 +1,14 @@
 import random
+import pickle
 
 class Agent:
     def __init__(self):
         self.q_table = {}
-        self.learning_rate = 0.1
+        self.learning_rate = 0.15
         self.discount_factor = 0.9
         self.exploration_rate = 1
-        self.exploration_decay_rate = 0.001
-        
-        # Initialize the agent's parameters
-        # For example, learning rate, discount factor, exploration rate, etc.
-    
+        self.exploration_decay_rate = 0.999
+        self.exploration_min = 0.2
     def get_current_state(self, player, enemies, lasers):
 
         grid = [[0 for _ in range(3)] for _ in range(3)]
@@ -37,13 +35,18 @@ class Agent:
         return state
     
     def select_action(self, state):
-        state_key = str(state)  # Convert the state to a string (or other hashable form)
+        print(f"EXPLORATION: {self.exploration_rate}")
+        print(f"LEARNING RATE: {self.learning_rate}")
+        state_key = str(state)  
         if random.uniform(0, 1) < self.exploration_rate:
-            return random.choice([0, 1, 2])  # Explore: random action
+            return random.choice([0, 1, 2, 3, 4, 5, 6])  
         else:
             # Exploit: choose the best action based on Q-table
-            self.q_table.setdefault(state_key, [0, 0, 0])
+            self.q_table.setdefault(state_key, [0, 0, 0, 0, 0, 0, 0])
             return self.q_table[state_key].index(max(self.q_table[state_key]))
+        
+        
+        # return random.choice([0, 1, 2])  # Explore: random action
     
     def reward_function(self, player, enemies, prev_health):
     # Initialize variables for calculating average distance and reward
@@ -62,7 +65,7 @@ class Agent:
             if distance < 250:
                 total_distance += distance
                 count += 1
-                print(f"Distance to enemy: {distance}")
+                # print(f"Distance to enemy: {distance}")
 
         # Calculate the average distance only for enemies within 250 units
         if count > 0:
@@ -79,8 +82,8 @@ class Agent:
     def learn(self, state, action, reward, next_state):
         state_key = str(state)
         next_state_key = str(next_state)
-        self.q_table.setdefault(state_key, [0, 0, 0])
-        self.q_table.setdefault(next_state_key, [0, 0, 0])
+        self.q_table.setdefault(state_key, [0, 0, 0, 0, 0, 0, 0])
+        self.q_table.setdefault(next_state_key, [0, 0, 0, 0, 0, 0, 0])
 
         # Q-learning update rule
         old_value = self.q_table[state_key][action]
@@ -89,8 +92,18 @@ class Agent:
         self.q_table[state_key][action] = new_value
 
         # Update exploration rate
-        self.exploration_rate *= self.exploration_decay
+        self.exploration_rate *= self.exploration_decay_rate
         self.exploration_rate = max(self.exploration_min, self.exploration_rate)
+        # print(self.q_table)
 
 
-# Other methods can be added for specific functionalities like saving/loading policies, updating exploration rates, etc.
+    def save_q_table(self):
+        with open("q_table.pickle", "wb") as f:
+            pickle.dump(self.q_table, f)
+        print("Q-table saved successfully!")
+
+    def load_q_table(self):
+        with open("q_table.pickle", "rb") as f:
+            self.q_table = pickle.load(f)
+        print("Q-table loaded successfully!")
+    

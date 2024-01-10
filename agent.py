@@ -96,6 +96,22 @@ class Agent:
         self.exploration_rate = max(self.exploration_min, self.exploration_rate)
         # print(self.q_table)
 
+    # learn function using pytorch or tensorflow
+    # def learn(self, state, action, reward, next_state):
+    #     state_key = str(state)
+    #     next_state_key = str(next_state)
+    #     self.q_table.setdefault(state_key, [0, 0, 0, 0, 0, 0, 0])
+    #     self.q_table.setdefault(next_state_key, [0, 0, 0, 0, 0, 0, 0])
+        
+    
+    #     # Q-learning update rule
+    #     old_value = self.q_table[state_key][action]
+    #     next_max = max(self.q_table[next_state_key])
+    #     new_value = (1 - self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * next_max)
+    #     self.q_table[state_key][action] = new_value
+        
+        
+
 
     def save_q_table(self):
         with open("q_table.pickle", "wb") as f:

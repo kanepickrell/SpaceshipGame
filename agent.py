@@ -4,7 +4,7 @@ import pickle
 class Agent:
     def __init__(self):
         self.q_table = {}
-        self.learning_rate = 0.15
+        self.learning_rate = 0.1
         self.discount_factor = 0.9
         self.exploration_rate = 1
         self.exploration_decay_rate = 0.999
